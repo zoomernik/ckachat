@@ -1,0 +1,25 @@
+﻿[Unit]
+Description=Telegram Video Downloader Bot
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=video-bot
+Group=video-bot
+WorkingDirectory=/opt/ckachat
+EnvironmentFile=/opt/ckachat/.env
+ExecStart=/opt/ckachat/.venv/bin/python /opt/ckachat/bot.py
+Restart=always
+RestartSec=5
+TimeoutStopSec=20
+KillSignal=SIGINT
+
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+ReadWritePaths=/tmp/video_bot /opt/ckachat
+
+[Install]
+WantedBy=multi-user.target

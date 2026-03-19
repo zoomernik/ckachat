@@ -1,12 +1,30 @@
-﻿# Telegram Video Bot (YouTube / VK / Instagram)
+﻿# Telegram Video Bot (YouTube / VK / Instagram / RuTube)
 
-Бот принимает ссылку на видео, определяет платформу и отправляет видео прямо в Telegram.
+Production-ready Telegram bot на Python 3.11+, который:
+- принимает ссылку на видео,
+- получает метаданные через `yt-dlp`,
+- предлагает качества,
+- скачивает в очереди,
+- отправляет обратно в Telegram (`reply_video` для mp4, иначе `reply_document`).
 
-## Что умеет
-- Принимает ссылку обычным сообщением.
-- Определяет платформу: YouTube, VK, Instagram.
-- Скачивает видео через `yt-dlp`.
-- Отправляет видео в чат как `sendVideo` (streaming).
+## Возможности
+- Модульная структура проекта (`video_bot/*`)
+- Type hints, логирование, cleanup временных файлов
+- 1 активная загрузка на пользователя
+- Глобальный лимит параллельных скачиваний
+- Лимиты размера и длительности
+- Поддержка `ffmpeg` (для yt-dlp окружения)
+- Поддержка Deno/EJS solver (опционально через env)
+- Docker-ready и Linux/systemd-ready
+
+## Структура
+- `bot.py` - entrypoint
+- `video_bot/config.py` - конфиг из env
+- `video_bot/yt_client.py` - извлечение метаданных/скачивание
+- `video_bot/download_queue.py` - очередь задач
+- `video_bot/telegram_handlers.py` - обработчики Telegram
+- `video_bot/solver.py` - интеграция Deno/EJS solver
+- `deploy/ckachat-bot.service` - systemd unit
 
 ## Локальный запуск
 ```powershell
@@ -15,24 +33,55 @@ python -m venv .venv
 .\.venv\Scripts\activate
 pip install -r requirements.txt
 Copy-Item .env.example .env
-# укажи токен в .env
+# укажи TELEGRAM_BOT_TOKEN
 python bot.py
 ```
 
-## Docker запуск
+## Docker
 ```bash
 docker build -t ckachat-bot .
-docker run --env TELEGRAM_BOT_TOKEN=your_token_here ckachat-bot
+docker run --rm --env-file .env ckachat-bot
 ```
 
-## Настройка
-1. Создай бота через `@BotFather` и получи токен.
-2. Передай переменную окружения `TELEGRAM_BOT_TOKEN`.
+## Deno/EJS solver для YouTube (опционально)
+Если используешь внешний solver-скрипт:
+- `YOUTUBE_SOLVER_MODE=deno_ejs`
+- `DENO_SOLVER_SCRIPT=/app/solver/solver.ts`
 
-## Использование
-- Отправь боту ссылку на видео (YouTube / VK / Instagram).
-- Бот обработает ссылку и пришлет видео в чат.
+Скрипт должен печатать JSON в stdout:
+```json
+{
+  "extractor_args": {"youtube": {"player_client": ["web"]}},
+  "cookie_file": "/app/cookies.txt"
+}
+```
 
-## Важно
-- Некоторые ссылки могут быть недоступны из-за ограничений самой платформы.
-- Для надежной отправки стоит держать итоговый файл до ~48 MB (настроено в коде).
+## systemd (VPS)
+1. Создай пользователя и директорию проекта:
+```bash
+sudo useradd -r -s /usr/sbin/nologin video-bot || true
+sudo mkdir -p /opt/ckachat
+```
+2. Скопируй проект в `/opt/ckachat`, создай `.env`, установи зависимости в `.venv`.
+3. Установи unit:
+```bash
+sudo cp deploy/ckachat-bot.service /etc/systemd/system/ckachat-bot.service
+sudo systemctl daemon-reload
+sudo systemctl enable --now ckachat-bot
+```
+4. Логи:
+```bash
+journalctl -u ckachat-bot -f
+```
+
+## Важные переменные
+Смотри `.env.example`:
+- `MAX_PARALLEL_DOWNLOADS`
+- `PER_USER_SINGLE_ACTIVE`
+- `MAX_UPLOAD_MB`
+- `MAX_DURATION_SECONDS`
+- `YOUTUBE_SOLVER_MODE`
+
+## Примечания
+- Один и тот же токен нельзя запускать в нескольких процессах одновременно (иначе `409 Conflict`).
+- Не коммить `.env` в репозиторий.

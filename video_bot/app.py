@@ -2,11 +2,21 @@
 
 import asyncio
 import logging
+import sys
 from contextlib import suppress
+from pathlib import Path
 
 from dotenv import load_dotenv
 from telegram import Update
 from telegram.ext import Application
+
+# If host runs this file directly (python /app/video_bot/app.py),
+# make sure parent folder (/app) is in sys.path so `video_bot` package is importable.
+if __package__ in (None, ""):
+    parent = Path(__file__).resolve().parent.parent
+    parent_str = str(parent)
+    if parent_str not in sys.path:
+        sys.path.insert(0, parent_str)
 
 try:
     from .config import load_settings

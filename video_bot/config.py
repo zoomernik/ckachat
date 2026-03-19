@@ -35,10 +35,31 @@ def _int_env(name: str, default: int) -> int:
     return int(raw)
 
 
+def _read_token_from_file() -> str:
+    candidates = [
+        Path("token.txt"),
+        Path("/app/token.txt"),
+        Path(".token"),
+        Path("/app/.token"),
+    ]
+    for path in candidates:
+        try:
+            if path.exists():
+                token = path.read_text(encoding="utf-8").strip()
+                if token:
+                    return token
+        except Exception:
+            continue
+    return ""
+
+
 def load_settings() -> Settings:
-    token = os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
+    token = os.getenv("TELEGRAM_BOT_TOKEN", "").strip() or _read_token_from_file()
     if not token:
-        raise RuntimeError("Не найден TELEGRAM_BOT_TOKEN в переменных окружения.")
+        raise RuntimeError(
+            "Не найден TELEGRAM_BOT_TOKEN. "
+            "Укажи переменную окружения или добавь файл token.txt в корень проекта."
+        )
 
     temp_root = os.getenv("TEMP_ROOT", "/tmp/video_bot").strip() or "/tmp/video_bot"
     Path(temp_root).mkdir(parents=True, exist_ok=True)

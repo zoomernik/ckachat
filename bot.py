@@ -148,6 +148,10 @@ async def unknown(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         await update.message.reply_text("Отправь ссылку на видео одним сообщением.")
 
 
+async def on_error(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
+    logger.exception("Unhandled error while processing update: %s", update, exc_info=context.error)
+
+
 def main() -> None:
     load_dotenv()
     token = os.getenv("TELEGRAM_BOT_TOKEN")
@@ -159,9 +163,13 @@ def main() -> None:
     app.add_handler(CommandHandler("help", help_cmd))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_link))
     app.add_handler(MessageHandler(filters.ALL, unknown))
+    app.add_error_handler(on_error)
 
     logger.info("Bot started")
-    app.run_polling(allowed_updates=Update.ALL_TYPES)
+    app.run_polling(
+        allowed_updates=Update.ALL_TYPES,
+        drop_pending_updates=True,
+    )
 
 
 if __name__ == "__main__":

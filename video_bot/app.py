@@ -8,11 +8,19 @@ from dotenv import load_dotenv
 from telegram import Update
 from telegram.ext import Application
 
-from .config import load_settings
-from .download_queue import DownloadQueue
-from .logging_setup import setup_logging
-from .telegram_handlers import BotHandlers
-from .yt_client import YtDlpClient
+try:
+    from .config import load_settings
+    from .download_queue import DownloadQueue
+    from .logging_setup import setup_logging
+    from .telegram_handlers import BotHandlers
+    from .yt_client import YtDlpClient
+except ImportError:
+    # Compatibility mode for hosts that run `python video_bot/app.py` directly.
+    from video_bot.config import load_settings
+    from video_bot.download_queue import DownloadQueue
+    from video_bot.logging_setup import setup_logging
+    from video_bot.telegram_handlers import BotHandlers
+    from video_bot.yt_client import YtDlpClient
 
 logger = logging.getLogger(__name__)
 

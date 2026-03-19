@@ -8,29 +8,26 @@
 - Скачивает видео через `yt-dlp`.
 - Отправляет видео в чат как `sendVideo` (streaming).
 
-## Установка
+## Локальный запуск
 ```powershell
 cd C:\Users\pusho\Desktop\ckachat
 python -m venv .venv
 .\.venv\Scripts\activate
 pip install -r requirements.txt
+Copy-Item .env.example .env
+# укажи токен в .env
+python bot.py
+```
+
+## Docker запуск
+```bash
+docker build -t ckachat-bot .
+docker run --env TELEGRAM_BOT_TOKEN=your_token_here ckachat-bot
 ```
 
 ## Настройка
 1. Создай бота через `@BotFather` и получи токен.
-2. Создай файл `.env` на основе шаблона:
-```powershell
-Copy-Item .env.example .env
-```
-3. В `.env` укажи:
-```env
-TELEGRAM_BOT_TOKEN=твой_токен
-```
-
-## Запуск
-```powershell
-python bot.py
-```
+2. Передай переменную окружения `TELEGRAM_BOT_TOKEN`.
 
 ## Использование
 - Отправь боту ссылку на видео (YouTube / VK / Instagram).

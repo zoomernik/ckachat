@@ -3,6 +3,5 @@
 *.pyo
 *.pyd
 .venv/
-.env
 .git/
 .gitignore

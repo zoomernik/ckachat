@@ -114,17 +114,22 @@ def build_quality_candidates(info: dict) -> list[dict]:
 def download_video(url: str, temp_dir: str, format_id: str | None = None) -> tuple[str, str | None]:
     output_template = str(Path(temp_dir) / "video.%(ext)s")
     if format_id:
-        format_expr = f"{format_id}/b[filesize<{MAX_UPLOAD_MB}M]/best"
+        # Download only progressive format (video+audio in one stream) to avoid ffmpeg merge.
+        format_expr = (
+            f"{format_id}[vcodec!=none][acodec!=none]/"
+            f"best[vcodec!=none][acodec!=none][filesize<{MAX_UPLOAD_MB}M]/"
+            f"best[vcodec!=none][acodec!=none]/best"
+        )
     else:
         format_expr = (
-            f"bv*[ext=mp4][filesize<{MAX_UPLOAD_MB}M]+ba[ext=m4a]/"
-            f"b[ext=mp4][filesize<{MAX_UPLOAD_MB}M]/"
-            f"b[filesize<{MAX_UPLOAD_MB}M]/best"
+            f"best[ext=mp4][vcodec!=none][acodec!=none][filesize<{MAX_UPLOAD_MB}M]/"
+            f"best[vcodec!=none][acodec!=none][filesize<{MAX_UPLOAD_MB}M]/"
+            f"best[ext=mp4][vcodec!=none][acodec!=none]/"
+            f"best[vcodec!=none][acodec!=none]/best"
         )
 
     ydl_opts = {
         "format": format_expr,
-        "merge_output_format": "mp4",
         "outtmpl": output_template,
         "noplaylist": True,
         "quiet": True,

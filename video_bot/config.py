@@ -20,6 +20,12 @@ class Settings:
     youtube_solver_mode: str = "off"  # off | deno_ejs
     deno_bin: str = "deno"
     deno_solver_script: str | None = None
+    max_download_attempts: int = 2
+    retry_backoff_seconds: int = 2
+    job_timeout_seconds: int = 900
+    healthcheck_enabled: bool = True
+    healthcheck_host: str = "0.0.0.0"
+    healthcheck_port: int = 8080
 
 
 def _int_env(name: str, default: int) -> int:
@@ -51,4 +57,10 @@ def load_settings() -> Settings:
         youtube_solver_mode=(os.getenv("YOUTUBE_SOLVER_MODE", "off") or "off").strip().lower(),
         deno_bin=os.getenv("DENO_BIN", "deno").strip() or "deno",
         deno_solver_script=os.getenv("DENO_SOLVER_SCRIPT") or None,
+        max_download_attempts=max(1, _int_env("MAX_DOWNLOAD_ATTEMPTS", 2)),
+        retry_backoff_seconds=max(0, _int_env("RETRY_BACKOFF_SECONDS", 2)),
+        job_timeout_seconds=max(30, _int_env("JOB_TIMEOUT_SECONDS", 900)),
+        healthcheck_enabled=os.getenv("HEALTHCHECK_ENABLED", "1") == "1",
+        healthcheck_host=os.getenv("HEALTHCHECK_HOST", "0.0.0.0").strip() or "0.0.0.0",
+        healthcheck_port=max(1, _int_env("HEALTHCHECK_PORT", 8080)),
     )

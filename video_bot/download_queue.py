@@ -65,11 +65,7 @@ class DownloadQueue:
         while True:
             job = await self.queue.get()
             try:
-                result = await self.client.download(
-                    url=job.url,
-                    platform=job.platform,
-                    format_id=job.format_id,
-                )
+                result = await self._run_with_retries(job)
                 if not job.result_future.done():
                     job.result_future.set_result(result)
             except Exception as exc:
@@ -82,3 +78,38 @@ class DownloadQueue:
 
     def queued_count(self) -> int:
         return self.queue.qsize()
+
+    async def _run_with_retries(
+        self, job: DownloadJob
+    ) -> tuple[DownloadResult, TemporaryDirectory[str]]:
+        last_error: Exception | None = None
+        for attempt in range(1, self.settings.max_download_attempts + 1):
+            try:
+                logger.info(
+                    "Worker download attempt %s/%s for user=%s",
+                    attempt,
+                    self.settings.max_download_attempts,
+                    job.user_id,
+                )
+                return await asyncio.wait_for(
+                    self.client.download(
+                        url=job.url,
+                        platform=job.platform,
+                        format_id=job.format_id,
+                    ),
+                    timeout=self.settings.job_timeout_seconds,
+                )
+            except Exception as exc:
+                last_error = exc
+                logger.warning(
+                    "Download attempt %s failed for user=%s: %s",
+                    attempt,
+                    job.user_id,
+                    exc,
+                )
+                if attempt < self.settings.max_download_attempts:
+                    await asyncio.sleep(self.settings.retry_backoff_seconds * attempt)
+
+        if last_error:
+            raise last_error
+        raise RuntimeError("Download failed with unknown error")

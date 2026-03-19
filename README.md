@@ -16,6 +16,8 @@ Production-ready Telegram bot на Python 3.11+, который:
 - Поддержка `ffmpeg` (для yt-dlp окружения)
 - Поддержка Deno/EJS solver (опционально через env)
 - Docker-ready и Linux/systemd-ready
+- Retry/backoff и timeout на задачу скачивания
+- Healthcheck endpoint: `GET /health` (по умолчанию `:8080`)
 
 ## Структура
 - `bot.py` - entrypoint
@@ -41,6 +43,10 @@ python bot.py
 ```bash
 docker build -t ckachat-bot .
 docker run --rm --env-file .env ckachat-bot
+```
+Проверка health:
+```bash
+curl http://127.0.0.1:8080/health
 ```
 
 ## Deno/EJS solver для YouTube (опционально)
@@ -81,6 +87,10 @@ journalctl -u ckachat-bot -f
 - `MAX_UPLOAD_MB`
 - `MAX_DURATION_SECONDS`
 - `YOUTUBE_SOLVER_MODE`
+- `MAX_DOWNLOAD_ATTEMPTS`
+- `RETRY_BACKOFF_SECONDS`
+- `JOB_TIMEOUT_SECONDS`
+- `HEALTHCHECK_PORT`
 
 ## Примечания
 - Один и тот же токен нельзя запускать в нескольких процессах одновременно (иначе `409 Conflict`).

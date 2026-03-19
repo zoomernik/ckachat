@@ -65,6 +65,7 @@ class BotHandlers:
     def register(self, app: Application) -> None:
         app.add_handler(CommandHandler("start", self.start))
         app.add_handler(CommandHandler("help", self.help_cmd))
+        app.add_handler(CommandHandler("status", self.status_cmd))
         app.add_handler(CallbackQueryHandler(self.handle_quality_pick, pattern=r"^dl:"))
         app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, self.handle_link))
         app.add_handler(MessageHandler(filters.ALL, self.unknown))
@@ -85,6 +86,17 @@ class BotHandlers:
                 "2) Выбери качество\n"
                 "3) Дождись отправки\n\n"
                 f"Лимиты: до {self.settings.max_upload_mb} MB и до {self.settings.max_duration_seconds // 60} минут."
+            )
+
+    async def status_cmd(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        if update.message:
+            await update.message.reply_text(
+                "Статус бота:\n"
+                f"- В очереди: {self.queue.queued_count()}\n"
+                f"- Параллельных загрузок: {self.settings.max_parallel_downloads}\n"
+                f"- Лимит файла: {self.settings.max_upload_mb} MB\n"
+                f"- Лимит длительности: {self.settings.max_duration_seconds // 60} мин\n"
+                f"- Solver: {self.settings.youtube_solver_mode}"
             )
 
     async def handle_link(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
